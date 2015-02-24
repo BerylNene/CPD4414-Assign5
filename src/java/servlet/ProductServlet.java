@@ -135,8 +135,27 @@ public class ProductServlet extends HttpServlet {
                 sb.append(String.format("{ \"productId\" : %d, \"name\" : %s, \"description\" : %s, \"quantity\" : %d },",
                         rs.getInt("id"), rs.getString("name"), rs.getString("description"), rs.getInt("quantity")));
             }
-            sb.substring(0, sb.length() - 1);
+            sb.setLength(sb.length()-1);
             sb.append("]");
+        } catch (SQLException ex) {
+            Logger.getLogger(ProductServlet.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return sb.toString();
+    }
+    
+    private String getSingleResult(String query, String... params) {
+
+        StringBuilder sb = new StringBuilder();
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            PreparedStatement pstmt = conn.prepareStatement(query);
+            for (int i = 1; i <= params.length; i++) {
+                pstmt.setString(i, params[i - 1]);
+            }
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                sb.append(String.format("{ \"productId\" : %d, \"name\" : %s, \"description\" : %s, \"quantity\" : %d }",
+                        rs.getInt("id"), rs.getString("name"), rs.getString("description"), rs.getInt("quantity")));
+            }
         } catch (SQLException ex) {
             Logger.getLogger(ProductServlet.class.getName()).log(Level.SEVERE, null, ex);
         }
