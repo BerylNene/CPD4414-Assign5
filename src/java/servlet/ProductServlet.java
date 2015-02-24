@@ -130,13 +130,13 @@ public class ProductServlet extends HttpServlet {
                 pstmt.setString(i, params[i - 1]);
             }
             ResultSet rs = pstmt.executeQuery();
-            sb.append("[");
+            sb.append("[ ");
             while (rs.next()) {
-                sb.append(String.format("{ \"productId\" : %d, \"name\" : %s, \"description\" : %s, \"quantity\" : %d },",
+                sb.append(String.format("{ \"productId\" : %d, \"name\" : \"%s\", \"description\" : \"%s\", \"quantity\" : %d },\n",
                         rs.getInt("id"), rs.getString("name"), rs.getString("description"), rs.getInt("quantity")));
             }
-            sb.setLength(sb.length()-1);
-            sb.append("]");
+            sb.setLength(sb.length()-2);
+            sb.append(" ]");
         } catch (SQLException ex) {
             Logger.getLogger(ProductServlet.class.getName()).log(Level.SEVERE, null, ex);
         }
