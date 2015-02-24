@@ -3,7 +3,6 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package servlet;
 
 import databaseConnection.DatabaseConnection;
@@ -29,7 +28,9 @@ import javax.servlet.http.HttpServletResponse;
  */
 @WebServlet("/Beryl")
 public class ProductServlet extends HttpServlet {
+
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
+
     /**
      * Handles the HTTP <code>GET</code> method.
      *
@@ -41,7 +42,7 @@ public class ProductServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-         response.setHeader("Content-Type", "text/plain-text");
+        response.setHeader("Content-Type", "text/plain-text");
         try (PrintWriter out = response.getWriter()) {
             if (!request.getParameterNames().hasMoreElements()) {
                 // There are no parameters at all
@@ -77,27 +78,31 @@ public class ProductServlet extends HttpServlet {
             String description = request.getParameter("description");
             String quantity = request.getParameter("quantity");
             int quantity_1 = Integer.parseInt(quantity);
-            
-            doUpdate("INSERT INTO sample (id, name, description, quantity) VALUES (?, ?, ?, ?)", id, name, description, quantity);
+
+            doUpdate("INSERT INTO sample (id, name, description, quantity) VALUES (?, ?, ?, ?)", id_1, name, description, quantity_1);
         } else {
             // There are no parameters at all
             response.setStatus(500);
         }
     }
-    
+
     /**
-     * 
+     *
      * @param query
      * @param params
-     * @return 
+     * @return
      */
-    
- private int doUpdate(String query, String... params) {
+    private int doUpdate(String query, int id, String name, String description, int quantity) {
         int numChanges = 0;
+        ArrayList prod = new ArrayList();
+        prod.add(id);
+        prod.add(name);
+        prod.add(description);
+        prod.add(quantity);
         try (Connection conn = DatabaseConnection.getConnection()) {
             PreparedStatement pstmt = conn.prepareStatement(query);
-            for (int i = 1; i <= params.length; i++) {
-                pstmt.setString(i, params[i - 1]);
+            for (int i = 1; i <= prod.size(); i++) {
+                pstmt.setString(i, prod.get(i - 1).toString());
             }
             numChanges = pstmt.executeUpdate();
         } catch (SQLException ex) {
@@ -105,6 +110,7 @@ public class ProductServlet extends HttpServlet {
         }
         return numChanges;
     }
+
     /**
      * Returns a short description of the servlet.
      *
@@ -114,33 +120,27 @@ public class ProductServlet extends HttpServlet {
     public String getServletInfo() {
         return "Short description";
     }// </editor-fold>
-    
-    
- private String getResults(String query, String... params) {
-//     ArrayList prod = new ArrayList();
-//     prod.add(id);
-//     prod.add(name);
-//     prod.add(description);
-//     prod.add(quantity);
+
+    private String getResults(String query, String... params) {
+
         StringBuilder sb = new StringBuilder();
         try (Connection conn = DatabaseConnection.getConnection()) {
             PreparedStatement pstmt = conn.prepareStatement(query);
             for (int i = 1; i <= params.length; i++) {
-                pstmt.setString(i, params[i-1]);
+                pstmt.setString(i, params[i - 1]);
             }
             ResultSet rs = pstmt.executeQuery();
             sb.append("[");
             while (rs.next()) {
-                sb.append(String.format("{ \"productId\" : %d, \"name\" : %s, \"description\" : %s, \"quantity\" : %d },", 
+                sb.append(String.format("{ \"productId\" : %d, \"name\" : %s, \"description\" : %s, \"quantity\" : %d },",
                         rs.getInt("id"), rs.getString("name"), rs.getString("description"), rs.getInt("quantity")));
             }
-            sb.substring(0, sb.length()-1);
+            sb.substring(0, sb.length() - 1);
             sb.append("]");
         } catch (SQLException ex) {
             Logger.getLogger(ProductServlet.class.getName()).log(Level.SEVERE, null, ex);
         }
         return sb.toString();
     }
-    
 
 }
