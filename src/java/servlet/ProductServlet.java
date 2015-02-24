@@ -142,5 +142,73 @@ public class ProductServlet extends HttpServlet {
         }
         return sb.toString();
     }
+    
+    @Override
+    protected void doPut(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        Set<String> keySet = request.getParameterMap().keySet();
+        if (keySet.contains("id") && keySet.contains("name")
+                && keySet.contains("description") && keySet.contains("quantity")) {
+            // There are some parameters
+            String id = request.getParameter("id");
+            int id_1 = Integer.parseInt(id);
+            String name = request.getParameter("name");
+            String description = request.getParameter("description");
+            String quantity = request.getParameter("quantity");
+            int quantity_1 = Integer.parseInt(quantity);
+
+            doPutUpdate("UPDATE products SET id = ?, name = ?, description = ?, quantity = ?", id_1, name, description, quantity_1);
+        } else {
+            // There are no parameters at all
+            response.setStatus(500);
+        }
+    }
+
+
+    private int doPutUpdate(String query, int id, String name, String description, int quantity) {
+        int numChanges = 0;
+        ArrayList prod = new ArrayList();
+        prod.add(id);
+        prod.add(name);
+        prod.add(description);
+        prod.add(quantity);
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            PreparedStatement pstmt = conn.prepareStatement(query);
+            for (int i = 1; i <= prod.size(); i++) {
+                pstmt.setString(i, prod.get(i - 1).toString());
+            }
+            numChanges = pstmt.executeUpdate();
+        } catch (SQLException ex) {
+            Logger.getLogger(ProductServlet.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return numChanges;
+    }
+    
+    @Override
+    protected void doDelete(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        Set<String> keySet = request.getParameterMap().keySet();
+        if (request.getParameterNames().hasMoreElements()) {
+            // There are some parameters
+            int id = Integer.parseInt(request.getParameter("id"));
+           doUpdate("DELETE from products where id = ?", id);
+        } else {
+            // There are no parameters at all
+            response.setStatus(500);
+        }
+    }
+
+    private int doUpdate(String query, int id) {
+        int numChanges = 0;
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            PreparedStatement pstmt = conn.prepareStatement(query);
+                pstmt.setInt(1, id);
+            numChanges = pstmt.executeUpdate();
+        } catch (SQLException ex) {
+            Logger.getLogger(ProductServlet.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return numChanges;
+    }
+
 
 }
