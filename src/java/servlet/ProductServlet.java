@@ -42,7 +42,6 @@ public class ProductServlet {
         Connection conn = DatabaseConnection.getConnection();
         String query = "SELECT * FROM products";
          PreparedStatement preparedStatement = conn.prepareStatement(query);
-        
          ResultSet resultSet  = preparedStatement.executeQuery();
          while (resultSet.next()){
              int num_columns = resultSet.getMetaData().getColumnCount();
@@ -117,8 +116,8 @@ public class ProductServlet {
      @PUT
     @Path("{productId}")
  // @Override
-    public void doPut(@PathParam("productId")int id, String prod)throws IOException, SQLException{
-        JSONObject jObject = new JSONObject();
+    public void doPut(@PathParam("productId")int id, String prod)throws IOException, SQLException, ParseException{
+        JSONObject jObject = (JSONObject) new JSONParser().parse(prod);
         String name = (String) jObject.get("name");
         String description = (String) jObject.get("description");
         int quantity =(int) jObject.get("quantity");
