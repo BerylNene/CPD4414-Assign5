@@ -7,7 +7,6 @@ package servlet;
 
 import databaseConnection.DatabaseConnection;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -16,46 +15,47 @@ import java.util.ArrayList;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+//import javax.servlet.annotation.WebServlet;
 import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 /**
  *
  * @author c0641046
  */
-@WebServlet("/Beryl")
-public class ProductServlet extends HttpServlet {
+//@WebServlet("/Beryl")
 
-    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
-
-    /**
-     * Handles the HTTP <code>GET</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        response.setHeader("Content-Type", "text/plain-text");
-        try (PrintWriter out = response.getWriter()) {
-            if (!request.getParameterNames().hasMoreElements()) {
-                // There are no parameters at all
-                out.println(getResults("SELECT * FROM products"));
-            } else {
-                // There are some parameters
-                int id = Integer.parseInt(request.getParameter("id"));
-                out.println(getResults("SELECT * FROM products WHERE id = ?", String.valueOf(id)));
-            }
-        } catch (IOException ex) {
-            Logger.getLogger(ProductServlet.class.getName()).log(Level.SEVERE, null, ex);
-        }
+@Path("/products")
+public class ProductServlet {
+    
+    @GET
+    @Produces("application/json")
+    public String doGet()throws IOException, SQLException {
+        JSONArray jArray = new JSONArray();
+        Connection conn = DatabaseConnection.getConnection();
+        String query = "SELECT * FROM products";
+         PreparedStatement preparedStatement = conn.prepareStatement(query);
+        
+         ResultSet resultSet  = preparedStatement.executeQuery();
+         while (resultSet.next()){
+             int num_columns = resultSet.getMetaData().getColumnCount();
+             JSONObject jObject = new JSONObject();
+             for (int i = 0; i < num_columns; i++){
+                 String columnName = resultSet.getMetaData().getColumnLabel(i+1);
+                 Object columnValue = resultSet.getObject(i+1);
+                 jObject.put(columnName, columnValue);
+             }
+             jArray.add(jObject);
+         }
+         return jArray.toJSONString();
     }
+
 
     /**
      * Handles the HTTP <code>POST</code> method.
@@ -65,8 +65,8 @@ public class ProductServlet extends HttpServlet {
      * @throws ServletException if a servlet-specific error occurs
      * @throws IOException if an I/O error occurs
      */
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+  //  @Override
+    public String doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         Set<String> keySet = request.getParameterMap().keySet();
         if (keySet.contains("id") && keySet.contains("name")
@@ -84,6 +84,7 @@ public class ProductServlet extends HttpServlet {
             // There are no parameters at all
             response.setStatus(500);
         }
+        return null;
     }
 
     /**
@@ -116,7 +117,7 @@ public class ProductServlet extends HttpServlet {
      *
      * @return a String containing servlet description
      */
-    @Override
+   // @Override
     public String getServletInfo() {
         return "Short description";
     }// </editor-fold>
@@ -162,7 +163,7 @@ public class ProductServlet extends HttpServlet {
         return sb.toString();
     }
     
-    @Override
+   // @Override
     protected void doPut(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         Set<String> keySet = request.getParameterMap().keySet();
@@ -203,7 +204,7 @@ public class ProductServlet extends HttpServlet {
         return numChanges;
     }
     
-    @Override
+    //@Override
     protected void doDelete(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         Set<String> keySet = request.getParameterMap().keySet();
