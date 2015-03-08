@@ -36,7 +36,7 @@ import org.json.simple.parser.ParseException;
 public class ProductServlet {
     
     @GET
-    @Produces("application/json")
+    @Produces("application/json; charset=UTF-8")
     public String doGet()throws IOException, SQLException {
         JSONArray jArray = new JSONArray();
         Connection conn = DatabaseConnection.getConnection();
@@ -57,7 +57,7 @@ public class ProductServlet {
     }
 
     @GET
-    @Produces("application/json")
+    @Produces("application/json; charset=UTF-8")
     @Path ("{productId}")
     public String doGet(@PathParam("productId")int id)throws IOException, SQLException {
         JSONObject jObject = new JSONObject();
@@ -82,6 +82,7 @@ public class ProductServlet {
      * Handles the HTTP <code>POST</code> method.
      *
      * @param prod
+     * @throws org.json.simple.parser.ParseException
      */
   //  @Override
     @POST
