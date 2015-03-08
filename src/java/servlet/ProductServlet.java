@@ -59,7 +59,7 @@ public class ProductServlet {
     @GET
     @Produces("application/json; charset=UTF-8")
     @Path ("{productId}")
-    public String doGet(@PathParam("productId")int id)throws IOException, SQLException {
+    public String doGet(@PathParam("productId") int id) throws IOException, SQLException {
         JSONObject jObject = new JSONObject();
         Connection conn = DatabaseConnection.getConnection();
         String query = "SELECT * FROM products where productId =" + id;
@@ -92,10 +92,10 @@ public class ProductServlet {
         String name = (String) jObject.get("name");
         String description = (String) jObject.get("description");
         int quantity =(int) jObject.get("quantity");
-        doPostPut("INSERT INTO products (name, description, quantity) VALUES (?, ?, ?)", name, description, quantity);
+        doInsert("INSERT INTO products (name, description, quantity) VALUES (?, ?, ?)", name, description, quantity);
     }
     
-    private int doPostPut(String query, String name, String description, int quantity){
+    private int doInsert(String query, String name, String description, int quantity){
         int numChanges = 0;
         ArrayList prod = new ArrayList();
         prod.add(name);
@@ -117,20 +117,19 @@ public class ProductServlet {
      @PUT
     @Path("{productId}")
  // @Override
-    public void doPut(@PathParam("productId")int id, String prod)throws IOException, SQLException, ParseException{
+    public void doPut(@PathParam("productId") int id, String prod) throws IOException, SQLException, ParseException{
         JSONObject jObject = (JSONObject) new JSONParser().parse(prod);
         String name = (String) jObject.get("name");
         String description = (String) jObject.get("description");
         int quantity =(int) jObject.get("quantity");
-        doPostPut("INSERT INTO products (name, description, quantity) VALUES (?, ?, ?, ?)", name, description, quantity);
          Connection conn = DatabaseConnection.getConnection();
-        String query = "UPDATE products where SET name =\'" + name +"\', description =\'" + description + "\', quantity =\'" + quantity;
+        String query = "UPDATE products where SET name =\'" + name +"\', description =\'" + description + "\', quantity =\'" + quantity + "WHERE productId=" +id;
         PreparedStatement preparedStatement = conn.prepareStatement(query);
         preparedStatement.executeUpdate();
     }
 
 
-    private int doPutUpdate(String query, String name, String description, int quantity) {
+    private int doUpdate(String query, String name, String description, int quantity) {
         int numChanges = 0;
         ArrayList prod = new ArrayList();
         prod.add(name);
@@ -151,7 +150,7 @@ public class ProductServlet {
     @DELETE
     @Path("{productId}")
     //@Override
-        public void doDelete(@PathParam("productId")int id) throws SQLException{
+        public void doDelete(@PathParam("productId") int id) throws SQLException{
         Connection conn = DatabaseConnection.getConnection();
         String query = "DELETE from products where productId =" + id;
         PreparedStatement preparedStatement = conn.prepareStatement(query);
