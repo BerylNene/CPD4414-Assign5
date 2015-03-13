@@ -29,10 +29,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+
 
 /**
  *
@@ -89,7 +86,7 @@ public class ProductServlet {
     //  @Override
     @POST
     @Consumes("application/json")
-    public void doPost(String prod) throws ParseException {
+    public void doPost(String prod) {
         JsonParser jObject = Json.createParser(new StringReader(prod));
         Map<String, String> map = new HashMap<>();
         String key = "";
@@ -135,18 +132,35 @@ public class ProductServlet {
 
     @PUT
     @Path("{productId}")
-    public void doPut(@PathParam("productId") int id, String prod) throws IOException, SQLException, ParseException {
-        JSONObject jObject = (JSONObject) new JSONParser().parse(prod);
-        String name = (String) jObject.get("name");
-        String description = (String) jObject.get("description");
-        int quantity = (int) jObject.get("quantity");
-        Connection conn = DatabaseConnection.getConnection();
-        String query = "UPDATE products where SET name =\'" + name + "\', description =\'" + description + "\', quantity =\'" + quantity + "WHERE productId=" + id;
-        PreparedStatement preparedStatement = conn.prepareStatement(query);
-        preparedStatement.executeUpdate();
+    @Consumes("application/json")
+    public void doPut(@PathParam("productId") String id, String prod){
+        JsonParser jObject = Json.createParser(new StringReader(prod));
+        Map<String, String> map = new HashMap<>();
+        String key = "";
+        String val = "";
+        while (jObject.hasNext()) {
+            JsonParser.Event evt = jObject.next();
+            switch (evt) {
+                case KEY_NAME:
+                    key = jObject.getString();
+                    break;
+                case VALUE_STRING:
+                    val = jObject.getString();
+                    map.put(key, val);
+                    break;
+                case VALUE_NUMBER:
+                    val = jObject.toString();
+                    map.put(key,val);
+                    map.put(key, val);
+                    break;
+            }
+        }
+        doInsert("INSERT INTO products (name, description, quantity) VALUES (?, ?, ?)",
+                map.get("name"), map.get("description"), map.get("quantity"));
     }
+    
 
-    private int doUpdate(String query, String name, String description, int quantity) {
+    private int doUpdate(String query, String name, String description, String quantity) {
         int numChanges = 0;
         ArrayList prod = new ArrayList();
         prod.add(name);
@@ -169,7 +183,7 @@ public class ProductServlet {
     //@Override
     public void doDelete(@PathParam("productId") int id) throws SQLException {
         Connection conn = DatabaseConnection.getConnection();
-        String query = "DELETE from products where productId =" + id;
+        String query = "DELETE from products where id =" + id;
         PreparedStatement preparedStatement = conn.prepareStatement(query);
         preparedStatement.execute();
 
