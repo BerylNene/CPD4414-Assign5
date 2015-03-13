@@ -12,7 +12,7 @@ import javax.ws.rs.core.Application;
  *
  * @author BerylNene
  */
-@javax.ws.rs.ApplicationPath("")
+@javax.ws.rs.ApplicationPath("beryl")
 public class ApplicationConfig extends Application {
 
     @Override

@@ -7,13 +7,21 @@ package servlet;
 
 import databaseConnection.DatabaseConnection;
 import java.io.IOException;
+import java.io.StringReader;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.json.Json;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonObjectBuilder;
+import javax.json.stream.JsonParser;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -31,51 +39,45 @@ import org.json.simple.parser.ParseException;
  * @author c0641046
  */
 //@WebServlet("/Beryl")
-
 @Path("/products")
 public class ProductServlet {
-    
+
     @GET
-    @Produces("application/json; charset=UTF-8")
-    public String doGet()throws IOException, SQLException {
-        JSONArray jArray = new JSONArray();
+    @Produces("application/json")
+    public String doGet() throws IOException, SQLException {
+        JsonArrayBuilder jArray = Json.createArrayBuilder();
         Connection conn = DatabaseConnection.getConnection();
-        String query = "SELECT * FROM products";
-         PreparedStatement preparedStatement = conn.prepareStatement(query);
-         ResultSet resultSet  = preparedStatement.executeQuery();
-         while (resultSet.next()){
-             int num_columns = resultSet.getMetaData().getColumnCount();
-             JSONObject jObject = new JSONObject();
-             for (int i = 0; i < num_columns; i++){
-                 String columnName = resultSet.getMetaData().getColumnLabel(i+1);
-                 Object columnValue = resultSet.getObject(i+1);
-                 jObject.put(columnName, columnValue);
-             }
-             jArray.add(jObject);
-         }
-         return jArray.toJSONString();
+        String query = "SELECT * FROM products;";
+        PreparedStatement pstm = conn.prepareStatement(query);
+        ResultSet rs = pstm.executeQuery();
+        while (rs.next()) {
+            JsonObjectBuilder jObject = Json.createObjectBuilder()
+                    .add("productID", rs.getInt("id"))
+                    .add("name", rs.getString("name"))
+                    .add("description", rs.getString("description"))
+                    .add("quantity", rs.getInt("quantity"));
+            jArray.add(jObject);
+        }
+        return jArray.build().toString();
     }
 
     @GET
-    @Produces("application/json; charset=UTF-8")
-    @Path ("{productId}")
+    @Produces("application/json")
+    @Path("{productId}")
     public String doGet(@PathParam("productId") int id) throws IOException, SQLException {
-        JSONObject jObject = new JSONObject();
+        JsonObjectBuilder jObject = Json.createObjectBuilder();
         Connection conn = DatabaseConnection.getConnection();
-        String query = "SELECT * FROM products where productId =" + id;
-        PreparedStatement preparedStatement = conn.prepareStatement(query);
-        
-         ResultSet resultSet  = preparedStatement.executeQuery();
-         while (resultSet.next()){
-             int num_columns = resultSet.getMetaData().getColumnCount();
-             for (int i = 0; i < num_columns; i++){
-                 String columnName = resultSet.getMetaData().getColumnLabel(i+1);
-                 Object columnValue = resultSet.getObject(i+1);
-                 jObject.put(columnName, columnValue);
-             }
-             
-         }
-         return jObject.toJSONString();
+        String query = "SELECT * FROM products where id = " + id + ";";
+        PreparedStatement pstm = conn.prepareStatement(query);
+        ResultSet rs = pstm.executeQuery();
+        while (rs.next()) {
+            jObject.add("productID", rs.getInt("id"))
+                    .add("name", rs.getString("name"))
+                    .add("description", rs.getString("description"))
+                    .add("quantity", rs.getInt("quantity"));
+
+        }
+        return jObject.build().toString();
     }
 
     /**
@@ -84,18 +86,35 @@ public class ProductServlet {
      * @param prod
      * @throws org.json.simple.parser.ParseException
      */
-  //  @Override
+    //  @Override
     @POST
-      @Path ("{productId}")
-    public void doPost(String prod) throws ParseException{
-        JSONObject jObject = (JSONObject) new JSONParser().parse(prod);
-        String name = (String) jObject.get("name");
-        String description = (String) jObject.get("description");
-        int quantity =(int) jObject.get("quantity");
-        doInsert("INSERT INTO products (name, description, quantity) VALUES (?, ?, ?)", name, description, quantity);
+    @Consumes("application/json")
+    public void doPost(String prod) throws ParseException {
+        JsonParser jObject = Json.createParser(new StringReader(prod));
+        Map<String, String> map = new HashMap<>();
+        String key = "";
+        String val = "";
+        while (jObject.hasNext()) {
+            JsonParser.Event evt = jObject.next();
+            switch (evt) {
+                case KEY_NAME:
+                    key = jObject.getString();
+                    break;
+                case VALUE_STRING:
+                    val = jObject.getString();
+                    map.put(key, val);
+                    break;
+                case VALUE_NUMBER:
+                    val = Integer.toString(jObject.getInt());
+                    map.put(key, val);
+                    break;
+            }
+        }
+        doInsert("INSERT INTO products (name, description, quantity) VALUES (?, ?, ?)",
+                map.get("name"), map.get("description"), map.get("quantity"));
     }
-    
-    private int doInsert(String query, String name, String description, int quantity){
+
+    private int doInsert(String query, String name, String description, String quantity) {
         int numChanges = 0;
         ArrayList prod = new ArrayList();
         prod.add(name);
@@ -111,23 +130,21 @@ public class ProductServlet {
             Logger.getLogger(ProductServlet.class.getName()).log(Level.SEVERE, null, ex);
         }
         return numChanges;
-    
+
     }
-  
-     @PUT
+
+    @PUT
     @Path("{productId}")
- // @Override
-    public void doPut(@PathParam("productId") int id, String prod) throws IOException, SQLException, ParseException{
+    public void doPut(@PathParam("productId") int id, String prod) throws IOException, SQLException, ParseException {
         JSONObject jObject = (JSONObject) new JSONParser().parse(prod);
         String name = (String) jObject.get("name");
         String description = (String) jObject.get("description");
-        int quantity =(int) jObject.get("quantity");
-         Connection conn = DatabaseConnection.getConnection();
-        String query = "UPDATE products where SET name =\'" + name +"\', description =\'" + description + "\', quantity =\'" + quantity + "WHERE productId=" +id;
+        int quantity = (int) jObject.get("quantity");
+        Connection conn = DatabaseConnection.getConnection();
+        String query = "UPDATE products where SET name =\'" + name + "\', description =\'" + description + "\', quantity =\'" + quantity + "WHERE productId=" + id;
         PreparedStatement preparedStatement = conn.prepareStatement(query);
         preparedStatement.executeUpdate();
     }
-
 
     private int doUpdate(String query, String name, String description, int quantity) {
         int numChanges = 0;
@@ -146,23 +163,23 @@ public class ProductServlet {
         }
         return numChanges;
     }
-    
+
     @DELETE
     @Path("{productId}")
     //@Override
-        public void doDelete(@PathParam("productId") int id) throws SQLException{
+    public void doDelete(@PathParam("productId") int id) throws SQLException {
         Connection conn = DatabaseConnection.getConnection();
         String query = "DELETE from products where productId =" + id;
         PreparedStatement preparedStatement = conn.prepareStatement(query);
         preparedStatement.execute();
-            
+
     }
 
     private int delete(String query, int id) {
         int numChanges = 0;
         try (Connection conn = DatabaseConnection.getConnection()) {
             PreparedStatement pstmt = conn.prepareStatement(query);
-                pstmt.setInt(1, id);
+            pstmt.setInt(1, id);
             numChanges = pstmt.executeUpdate();
         } catch (SQLException ex) {
             Logger.getLogger(ProductServlet.class.getName()).log(Level.SEVERE, null, ex);
@@ -170,15 +187,12 @@ public class ProductServlet {
         return numChanges;
     }
 
-
-
-
     /**
      * Returns a short description of the servlet.
      *
      * @return a String containing servlet description
      */
-   // @Override
+    // @Override
     public String getServletInfo() {
         return "Short description";
     }// </editor-fold>
@@ -197,14 +211,14 @@ public class ProductServlet {
                 sb.append(String.format("{ \"productId\" : %d, \"name\" : \"%s\", \"description\" : \"%s\", \"quantity\" : %d },\n",
                         rs.getInt("id"), rs.getString("name"), rs.getString("description"), rs.getInt("quantity")));
             }
-            sb.setLength(sb.length()-2);
+            sb.setLength(sb.length() - 2);
             sb.append(" ]");
         } catch (SQLException ex) {
             Logger.getLogger(ProductServlet.class.getName()).log(Level.SEVERE, null, ex);
         }
         return sb.toString();
     }
-    
+
     private String getSingleResult(String query, String... params) {
 
         StringBuilder sb = new StringBuilder();
@@ -224,4 +238,3 @@ public class ProductServlet {
         return sb.toString();
     }
 }
-  
