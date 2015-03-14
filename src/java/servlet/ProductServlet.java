@@ -83,8 +83,8 @@ public class ProductServlet {
         String key = "";
         String value = "";
         while (jObject.hasNext()) {
-            JsonParser.Event evt = jObject.next();
-            switch (evt) {
+            JsonParser.Event event = jObject.next();
+            switch (event) {
                 case KEY_NAME:
                     key = jObject.getString();
                     break;
@@ -130,8 +130,8 @@ public class ProductServlet {
         String key = "";
         String value = "";
         while (jObject.hasNext()) {
-            JsonParser.Event evt = jObject.next();
-            switch (evt) {
+            JsonParser.Event event = jObject.next();
+            switch (event) {
                 case KEY_NAME:
                     key = jObject.getString();
                     break;
@@ -140,18 +140,16 @@ public class ProductServlet {
                     map.put(key, value);
                     break;
                 case VALUE_NUMBER:
-                    value = jObject.toString();
+                    value = jObject.getString();
                     map.put(key,value);
-                    map.put(key, value);
                     break;
             }
         }
-        doInsert("INSERT INTO products (name, description, quantity) VALUES (?, ?, ?)",
-                map.get("name"), map.get("description"), map.get("quantity"));
+        doUpdate("UPDATE PRODUCTS  SET name = ?, description = ?, quantity = ? WHERE id = ?",
+                map.get("name"), map.get("description"), map.get("quantity"),id);
     }
-    
 
-    private int doUpdate(String query, String name, String description, String quantity) {
+    private int doUpdate(String query, String name, String description, String quantity, String id) {
         int numChanges = 0;
         ArrayList prod = new ArrayList();
         prod.add(name);
