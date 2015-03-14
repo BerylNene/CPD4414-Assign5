@@ -35,7 +35,6 @@ import javax.ws.rs.Produces;
  *
  * @author c0641046
  */
-//@WebServlet("/Beryl")
 @Path("/products")
 public class ProductServlet {
 
@@ -72,25 +71,17 @@ public class ProductServlet {
                     .add("name", rs.getString("name"))
                     .add("description", rs.getString("description"))
                     .add("quantity", rs.getInt("quantity"));
-
         }
         return jObject.build().toString();
     }
-
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param prod
-     * @throws org.json.simple.parser.ParseException
-     */
-    //  @Override
+    
     @POST
     @Consumes("application/json")
     public void doPost(String prod) {
         JsonParser jObject = Json.createParser(new StringReader(prod));
         Map<String, String> map = new HashMap<>();
         String key = "";
-        String val = "";
+        String value = "";
         while (jObject.hasNext()) {
             JsonParser.Event evt = jObject.next();
             switch (evt) {
@@ -98,12 +89,12 @@ public class ProductServlet {
                     key = jObject.getString();
                     break;
                 case VALUE_STRING:
-                    val = jObject.getString();
-                    map.put(key, val);
+                    value = jObject.getString();
+                    map.put(key, value);
                     break;
                 case VALUE_NUMBER:
-                    val = Integer.toString(jObject.getInt());
-                    map.put(key, val);
+                    value = Integer.toString(jObject.getInt());
+                    map.put(key, value);
                     break;
             }
         }
@@ -137,7 +128,7 @@ public class ProductServlet {
         JsonParser jObject = Json.createParser(new StringReader(prod));
         Map<String, String> map = new HashMap<>();
         String key = "";
-        String val = "";
+        String value = "";
         while (jObject.hasNext()) {
             JsonParser.Event evt = jObject.next();
             switch (evt) {
@@ -145,13 +136,13 @@ public class ProductServlet {
                     key = jObject.getString();
                     break;
                 case VALUE_STRING:
-                    val = jObject.getString();
-                    map.put(key, val);
+                    value = jObject.getString();
+                    map.put(key, value);
                     break;
                 case VALUE_NUMBER:
-                    val = jObject.toString();
-                    map.put(key,val);
-                    map.put(key, val);
+                    value = jObject.toString();
+                    map.put(key,value);
+                    map.put(key, value);
                     break;
             }
         }
@@ -186,7 +177,6 @@ public class ProductServlet {
         String query = "DELETE from products where id =" + id;
         PreparedStatement preparedStatement = conn.prepareStatement(query);
         preparedStatement.execute();
-
     }
 
     private int delete(String query, int id) {
@@ -201,12 +191,7 @@ public class ProductServlet {
         return numChanges;
     }
 
-    /**
-     * Returns a short description of the servlet.
-     *
-     * @return a String containing servlet description
-     */
-    // @Override
+    
     public String getServletInfo() {
         return "Short description";
     }// </editor-fold>
